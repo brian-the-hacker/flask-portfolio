@@ -7,9 +7,11 @@ main = Blueprint('main', __name__)
 @main.route('/submit-contact', methods=['POST'])
 def send_message():
     try:
-        name = request.form.get('name')
-        email = request.form.get('email')
-        message = request.form.get('message')
+        data = request.get_json()  # <-- IMPORTANT FIX
+
+        name = data.get('name')
+        email = data.get('email')
+        message = data.get('message')
 
         url = "https://api.brevo.com/v3/smtp/email"
 
@@ -19,7 +21,7 @@ def send_message():
             "content-type": "application/json"
         }
 
-        data = {
+        payload = {
             "sender": {"email": os.environ["BREVO_SENDER"], "name": "Portfolio"},
             "to": [{"email": os.environ["BREVO_RECEIVER"]}],
             "subject": f"New Message from {name}",
@@ -32,7 +34,7 @@ Message:
 """
         }
 
-        response = requests.post(url, json=data, headers=headers, timeout=10)
+        response = requests.post(url, json=payload, headers=headers, timeout=10)
 
         if response.status_code in (200, 201):
             return jsonify({"status": "success"}), 200
